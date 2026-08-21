@@ -1,1 +1,188 @@
+# ============================================================
+# YuvaIntern - NSDC Internship
+# Week 1: Data Cleaning and Preliminary Analysis
+# Dataset: Most Streamed Spotify Songs 2025
+# ============================================================
 
+# ------------------------------------------------------------
+# 1. Install and Load Required Packages
+# ------------------------------------------------------------
+
+install.packages("tidyverse")
+install.packages("corrplot")
+
+library(tidyverse)
+library(corrplot)
+
+
+# ------------------------------------------------------------
+# 2. Import Dataset
+# ------------------------------------------------------------
+
+spotify <- read.csv("most_streamed_spotify_2025.csv")
+
+
+# ------------------------------------------------------------
+# 3. Initial Dataset Inspection
+# ------------------------------------------------------------
+
+head(spotify)
+
+str(spotify)
+
+summary(spotify)
+
+dim(spotify)
+
+names(spotify)
+
+
+# ------------------------------------------------------------
+# 4. Missing Value Detection
+# ------------------------------------------------------------
+
+colSums(is.na(spotify))
+
+
+# ------------------------------------------------------------
+# 5. Duplicate Record Check
+# ------------------------------------------------------------
+
+sum(duplicated(spotify))
+
+
+# ------------------------------------------------------------
+# 6. Remove High-Missingness Column
+# ------------------------------------------------------------
+
+spotify <- spotify %>%
+  select(-wrapped_global_top10_rank)
+
+names(spotify)
+
+colSums(is.na(spotify))
+
+sum(duplicated(spotify))
+
+
+# ------------------------------------------------------------
+# 7. Outlier Detection
+# ------------------------------------------------------------
+
+boxplot(
+  spotify$spotify_streams_total,
+  main = "Boxplot of Total Spotify Streams"
+)
+
+boxplot(
+  spotify$daily_streams,
+  main = "Boxplot of Daily Streams"
+)
+
+
+# ------------------------------------------------------------
+# 8. Normalization / Standardization
+# ------------------------------------------------------------
+
+spotify$spotify_streams_total <-
+  scale(spotify$spotify_streams_total)
+
+spotify$daily_streams <-
+  scale(spotify$daily_streams)
+
+spotify$daily_stream_share_pct <-
+  scale(spotify$daily_stream_share_pct)
+
+
+# Check transformed data
+summary(spotify)
+
+
+# ------------------------------------------------------------
+# 9. Categorical Variable Encoding
+# ------------------------------------------------------------
+
+spotify$is_collaboration <-
+  as.numeric(as.factor(spotify$is_collaboration))
+
+spotify$artist <-
+  as.numeric(as.factor(spotify$artist))
+
+spotify$track <-
+  as.numeric(as.factor(spotify$track))
+
+
+# Check final structure
+str(spotify)
+
+
+# ------------------------------------------------------------
+# 10. Exploratory Analysis
+# ------------------------------------------------------------
+
+# Distribution of Daily Streams
+hist(
+  spotify$daily_streams,
+  main = "Distribution of Daily Streams",
+  xlab = "Daily Streams"
+)
+
+
+# Collaboration Distribution
+barplot(
+  table(spotify$is_collaboration),
+  main = "Collaboration Distribution"
+)
+
+
+# Daily Streams vs Total Streams
+plot(
+  spotify$daily_streams,
+  spotify$spotify_streams_total,
+  main = "Daily Streams vs Total Streams",
+  xlab = "Daily Streams",
+  ylab = "Total Streams"
+)
+
+
+# ------------------------------------------------------------
+# 11. Correlation Analysis
+# ------------------------------------------------------------
+
+numeric_data <- spotify %>%
+  select(where(is.numeric))
+
+cor_matrix <- cor(numeric_data)
+
+corrplot(
+  cor_matrix,
+  method = "color"
+)
+
+
+# ------------------------------------------------------------
+# 12. Final Dataset Verification
+# ------------------------------------------------------------
+
+dim(spotify)
+
+names(spotify)
+
+head(spotify)
+
+str(spotify)
+
+colSums(is.na(spotify))
+
+summary(spotify)
+
+
+# ------------------------------------------------------------
+# 13. Export Cleaned Dataset
+# ------------------------------------------------------------
+
+write.csv(
+  spotify,
+  "spotify_cleaned.csv",
+  row.names = FALSE
+)
