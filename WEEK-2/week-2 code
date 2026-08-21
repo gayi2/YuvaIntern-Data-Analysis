@@ -1,1 +1,218 @@
+# ============================================================
+# YuvaIntern - NSDC Internship
+# Week 2: Data Visualization and Insight Communication
+# Dataset: Most Streamed Spotify Songs 2025
+# ============================================================
 
+# ------------------------------------------------------------
+# 1. Load Required Packages
+# ------------------------------------------------------------
+
+library(tidyverse)
+library(corrplot)
+
+
+# ------------------------------------------------------------
+# 2. Import Original Dataset
+# ------------------------------------------------------------
+
+spotify_original <-
+  read.csv("most_streamed_spotify_2025.csv")
+
+
+# ------------------------------------------------------------
+# 3. Top 10 Most Streamed Songs
+# ------------------------------------------------------------
+
+top_10_songs <- spotify_original %>%
+  arrange(desc(spotify_streams_total)) %>%
+  select(
+    track,
+    artist,
+    spotify_streams_total
+  ) %>%
+  head(10)
+
+top_10_songs
+
+
+ggplot(
+  top_10_songs,
+  aes(
+    x = reorder(track, spotify_streams_total),
+    y = spotify_streams_total
+  )
+) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 10 Most Streamed Songs",
+    x = "Song",
+    y = "Total Spotify Streams"
+  )
+
+
+# ------------------------------------------------------------
+# 4. Top 10 Artists by Number of Songs
+# ------------------------------------------------------------
+
+top_artists <- spotify_original %>%
+  count(
+    artist,
+    sort = TRUE
+  ) %>%
+  head(10)
+
+top_artists
+
+
+ggplot(
+  top_artists,
+  aes(
+    x = reorder(artist, n),
+    y = n
+  )
+) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 10 Artists by Number of Songs",
+    x = "Artist",
+    y = "Number of Songs"
+  )
+
+
+# ------------------------------------------------------------
+# 5. Collaboration Distribution
+# ------------------------------------------------------------
+
+table(
+  spotify_original$is_collaboration
+)
+
+
+ggplot(
+  spotify_original,
+  aes(x = is_collaboration)
+) +
+  geom_bar() +
+  labs(
+    title = "Distribution of Solo Songs and Collaborations",
+    x = "Collaboration",
+    y = "Number of Songs"
+  )
+
+
+# ------------------------------------------------------------
+# 6. Daily Streams vs Total Spotify Streams
+# ------------------------------------------------------------
+
+ggplot(
+  spotify_original,
+  aes(
+    x = daily_streams,
+    y = spotify_streams_total
+  )
+) +
+  geom_point() +
+  labs(
+    title = "Daily Streams vs Total Spotify Streams",
+    x = "Daily Streams",
+    y = "Total Spotify Streams"
+  )
+
+
+# ------------------------------------------------------------
+# 7. Correlation Between Daily and Total Streams
+# ------------------------------------------------------------
+
+cor(
+  spotify_original$daily_streams,
+  spotify_original$spotify_streams_total,
+  use = "complete.obs"
+)
+
+
+# ------------------------------------------------------------
+# 8. Top 10 Artists by Total Spotify Streams
+# ------------------------------------------------------------
+
+artist_streams <- spotify_original %>%
+  group_by(artist) %>%
+  summarise(
+    total_streams =
+      sum(
+        spotify_streams_total,
+        na.rm = TRUE
+      )
+  ) %>%
+  arrange(
+    desc(total_streams)
+  ) %>%
+  head(10)
+
+
+ggplot(
+  artist_streams,
+  aes(
+    x = reorder(artist, total_streams),
+    y = total_streams
+  )
+) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 10 Artists by Total Spotify Streams",
+    x = "Artist",
+    y = "Combined Spotify Streams"
+  )
+
+
+# ------------------------------------------------------------
+# 9. Top 10 Songs by Daily Stream Share
+# ------------------------------------------------------------
+
+top_daily_share <- spotify_original %>%
+  arrange(
+    desc(daily_stream_share_pct)
+  ) %>%
+  select(
+    track,
+    artist,
+    daily_stream_share_pct
+  ) %>%
+  head(10)
+
+
+ggplot(
+  top_daily_share,
+  aes(
+    x = reorder(track, daily_stream_share_pct),
+    y = daily_stream_share_pct
+  )
+) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 10 Songs by Daily Stream Share",
+    x = "Song",
+    y = "Daily Stream Share (%)"
+  )
+
+# ------------------------------------------------------------
+# 10. Correlation Heatmap
+# ------------------------------------------------------------
+
+numeric_data <- spotify_original %>%
+  select(where(is.numeric))
+
+cor_matrix <- cor(
+  numeric_data,
+  use = "complete.obs"
+)
+
+corrplot(
+  cor_matrix,
+  method = "color",
+  type = "upper"
+)
