@@ -1,0 +1,251 @@
+# ============================================================
+# WEEK 3: STATISTICAL ANALYSIS AND PREDICTIVE MODELING
+# Dataset: Most Streamed Spotify Songs 2025
+# Language: R
+# ============================================================
+
+
+# ============================================================
+# 1. LOAD REQUIRED LIBRARIES
+# ============================================================
+
+library(tidyverse)
+library(caret)
+
+
+# ============================================================
+# 2. LOAD THE CLEANED DATASET
+# ============================================================
+
+spotify <- read.csv("spotify_cleaned.csv")
+
+
+# ============================================================
+# 3. EXPLORATORY STATISTICAL ANALYSIS
+# ============================================================
+
+# View first few records
+head(spotify)
+
+# Check dataset structure
+str(spotify)
+
+# Generate summary statistics
+summary(spotify)
+
+
+# ============================================================
+# 4. CORRELATION ANALYSIS
+# ============================================================
+
+correlation <- cor(
+  spotify$daily_streams,
+  spotify$spotify_streams_total,
+  use = "complete.obs"
+)
+
+print(correlation)
+
+
+# ============================================================
+# 5. HYPOTHESIS TESTING
+# ============================================================
+
+# H0: There is no significant relationship between
+# daily streams and total Spotify streams.
+#
+# H1: There is a significant relationship between
+# daily streams and total Spotify streams.
+
+cor_test <- cor.test(
+  spotify$daily_streams,
+  spotify$spotify_streams_total,
+  method = "pearson"
+)
+
+print(cor_test)
+
+
+# ============================================================
+# 6. NORMALITY TESTING
+# ============================================================
+
+# Shapiro-Wilk test for Daily Streams
+daily_streams_normality <- shapiro.test(
+  sample(
+    spotify$daily_streams,
+    min(5000, length(spotify$daily_streams))
+  )
+)
+
+print(daily_streams_normality)
+
+
+# Shapiro-Wilk test for Total Spotify Streams
+total_streams_normality <- shapiro.test(
+  sample(
+    spotify$spotify_streams_total,
+    min(5000, length(spotify$spotify_streams_total))
+  )
+)
+
+print(total_streams_normality)
+
+
+# ============================================================
+# 7. TRAIN-TEST SPLIT
+# ============================================================
+
+set.seed(123)
+
+train_index <- createDataPartition(
+  spotify$spotify_streams_total,
+  p = 0.80,
+  list = FALSE
+)
+
+train_data <- spotify[train_index, ]
+test_data <- spotify[-train_index, ]
+
+# Display dataset sizes
+cat("Training observations:", nrow(train_data), "\n")
+cat("Testing observations:", nrow(test_data), "\n")
+
+
+# ============================================================
+# 8. LINEAR REGRESSION MODEL
+# ============================================================
+
+# Target variable:
+# spotify_streams_total
+#
+# Predictor variables:
+# daily_streams
+# daily_stream_share_pct
+
+model <- lm(
+  spotify_streams_total ~
+    daily_streams +
+    daily_stream_share_pct,
+  data = train_data
+)
+
+# Display regression results
+summary(model)
+
+
+# ============================================================
+# 9. PREDICTIONS ON TEST DATA
+# ============================================================
+
+predictions <- predict(
+  model,
+  newdata = test_data
+)
+
+# Display first predictions
+head(predictions)
+
+
+# ============================================================
+# 10. MODEL PERFORMANCE EVALUATION
+# ============================================================
+
+actual <- test_data$spotify_streams_total
+
+
+# Mean Absolute Error
+MAE <- mean(
+  abs(actual - predictions)
+)
+
+# Root Mean Squared Error
+RMSE <- sqrt(
+  mean((actual - predictions)^2)
+)
+
+# R-squared
+R_squared <- 1 -
+  sum((actual - predictions)^2) /
+  sum((actual - mean(actual))^2)
+
+
+# Display performance metrics
+cat("Mean Absolute Error (MAE):", MAE, "\n")
+cat("Root Mean Squared Error (RMSE):", RMSE, "\n")
+cat("R-squared (R²):", R_squared, "\n")
+
+
+# ============================================================
+# 11. FIVE-FOLD CROSS-VALIDATION
+# ============================================================
+
+control <- trainControl(
+  method = "cv",
+  number = 5
+)
+
+cv_model <- train(
+  spotify_streams_total ~
+    daily_streams +
+    daily_stream_share_pct,
+  data = train_data,
+  method = "lm",
+  trControl = control
+)
+
+print(cv_model)
+
+
+# ============================================================
+# 12. REGRESSION DIAGNOSTICS
+# ============================================================
+
+par(mfrow = c(2, 2))
+
+plot(model)
+
+par(mfrow = c(1, 1))
+
+
+# ============================================================
+# 13. ACTUAL VS PREDICTED VALUES
+# ============================================================
+
+plot(
+  actual,
+  predictions,
+  main = "Actual vs Predicted Spotify Streams",
+  xlab = "Actual Total Spotify Streams",
+  ylab = "Predicted Total Spotify Streams"
+)
+
+abline(
+  a = 0,
+  b = 1
+)
+
+
+# ============================================================
+# 14. SAVE MODEL PERFORMANCE RESULTS
+# ============================================================
+
+model_results <- data.frame(
+  Metric = c(
+    "MAE",
+    "RMSE",
+    "R-squared"
+  ),
+  Value = c(
+    MAE,
+    RMSE,
+    R_squared
+  )
+)
+
+print(model_results)
+
+
+# ============================================================
+# END OF WEEK 3 ANALYSIS
+# ============================================================
